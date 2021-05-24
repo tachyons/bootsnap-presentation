@@ -1,0 +1,18 @@
+{
+  "name": "bootsnap_intro",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Aboobacker MK",
+  "license": "None",
+  "private": true,
+  "dependencies": {
+    "esbuild": "^0.12.1",
+    "http-server": "^0.12.3",
+    "reveal.js": "^4.1.1"
+  },
+  "scripts": {
+    "dev": "esbuild app.js --bundle --outfile=out.js --watch",
+    "build": "esbuild app.js --bundle --outfile=out.js",
+    "server": "http-server ."
+  }
+}
