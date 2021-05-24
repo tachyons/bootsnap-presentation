@@ -11,7 +11,7 @@
     "reveal.js": "^4.1.1"
   },
   "scripts": {
-    "dev": "esbuild app.js --bundle --outfile=out.js --watch",
+    "dev": "esbuild app.js --bundle --outfile=out.js --watch --loader:.woff=file --loader:.eot=file --loader:.ttf=file",
     "build": "esbuild app.js --bundle --outfile=out.js",
     "server": "http-server ."
   }
