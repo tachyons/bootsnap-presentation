@@ -4,7 +4,7 @@
 
 ## Aboobacker MK
 
-### Software Engineer
+### Software Engineer 👨‍💻
 
 ---
 
@@ -12,9 +12,17 @@
 
 ---
 
+```
+$ ruby program.rb
+```
+---
+### Lot of steps 🪜
+
 !['tokenize.png'](tokenize.png)
 
 ---
+
+### Let's rip them apart 🔪
 ```ruby
 require 'ripper'
 require 'pp'
@@ -26,11 +34,15 @@ CODE
 ```
 
 ---
+
+### Tokenization
 ```ruby
 irb(main):043:0> Ripper.tokenize code
 => ["def", " ", "add", "(", "x", ",", " ", "y", ")", "\n", "x", " ", "+", " ", "y", "\n", "end", "\n"]
 ```
 ---
+### Parsing 
+
 ```ruby
 irb(main):042:0> pp Ripper.sexp(code)
 [:program,
@@ -60,7 +72,7 @@ irb(main):042:0> pp Ripper.sexp(code)
 Ref: Ruby Under a microscope
 
 ---
-YARV code
+### Compile to YARV
 ```
 irb(main):052:0> puts RubyVM::InstructionSequence.compile(code).disasm
 == disasm: #<ISeq:<compiled>@<compiled>:1 (1,0)-(3,3)> (catch: FALSE)
@@ -78,9 +90,7 @@ local table (size: 2, argc: 2 [opts: 0, rest: -1, post: 0, block: -1, kw: -1@-1,
 => nil
 ```
 ---
-
-
-
+### Can we run ruby program from the binary 🧐
 
 ```bash
 ➜ cat example.rb
@@ -95,20 +105,22 @@ YARB@
 numberE+Eexampleputs���������%
 ```
 ---
+### Here it is 🔥
+
 ```ruby
 irb(main):018:0>  RubyVM::InstructionSequence.load_from_binary(File.read('example.bin')).eval
 46
 ```
 ---
-Machine dependent, can't transfer
+- Machine dependent, can't transfer
 
-Programatically load
+<!-- Programatically load
 
 Read Iseq from files
 
 bootsnap and yumiomu
 
-Instruction elimination
+Instruction elimination -->
 
 ---
 Let's talk about `require`
@@ -120,8 +132,10 @@ end
 ```
 ---
 
-- What if we rewuire twice? 
+- What if we require twice? 
 ---
+
+### Keep track of require 📒
 
 ```ruby
   $LOADED_FEATURES = []
@@ -132,10 +146,10 @@ end
   end
 ```
 ---
-Absolute paths only ?
+#### Absolute paths only ?
 
 ---
-
+### Look everywhere 🕵️‍♂️
 ```ruby
   $LOAD_PATH = []
 
@@ -148,6 +162,8 @@ Absolute paths only ?
   end
 ```
 ---
+
+### Luxola stats 📊
 ```bash
 irb(main):054:0>  $LOADED_FEATURES.count
 => 6552
@@ -160,7 +176,7 @@ irb(main):058:0> $LOAD_PATH.count
 ---
 ### Redundant io operations
 ---
-## Bootsnap
+## Bootsnap 🔥
 
 - Path Pre-Scanning
 - compilation Caching
@@ -217,6 +233,10 @@ ActiveSupport::Dependencies.autoload_paths
 ## Caching LoadErrors
 
 ---
+![Load cache](load_cache.png)
+---
+
+### Compilation Caching
 ```ruby
 module InstructionSequenceMixin
     def load_iseq(path)
@@ -245,3 +265,31 @@ def self.fetch(path, cache_dir: ISeq.cache_dir)
   )
 end
 ```
+---
+### Result
+
+Before:	29.772s
+After: 20.115s
+
+---
+### What about spring then ? 🤨
+
+---
+
+- Spring is a rails only tool
+- Only for development and test environments
+---
+
+![Spring](spring.png)
+
+---
+https://github.com/rails/spring/blob/577cf01f232bb6dbd0ade7df2df2ac209697e741/lib/spring/application.rb#L150
+---
+### Why are we getting weired errors then ?
+---
+    There are only two hard things in Computer Science: cache invalidation and naming things.
+
+    -- Phil Karlton
+
+---
+
