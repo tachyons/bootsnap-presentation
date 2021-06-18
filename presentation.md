@@ -108,7 +108,8 @@ numberE+Eexampleputs���������%
 ### Here it is 🔥
 
 ```ruby
-irb(main):018:0>  RubyVM::InstructionSequence.load_from_binary(File.read('example.bin')).eval
+irb(main):018:0>  RubyVM::InstructionSequence.
+load_from_binary(File.read('example.bin')).eval
 46
 ```
 ---
@@ -178,20 +179,20 @@ irb(main):058:0> $LOAD_PATH.count
 ---
 ## Bootsnap 🔥
 
-- Path Pre-Scanning
-- compilation Caching
+- Path Pre-Scanning <!-- .element: class="fragment" data-fragment-index="1" -->
+- compilation Caching <!-- .element: class="fragment" data-fragment-index="2" -->
 ---
 ### Path prescanning
 
-- Kernel#require and Kernel#load are modified to eliminate $LOAD_PATH scans
-- ActiveSupport::Dependencies.{autoloadable_module?,load_missing_constant,depend_on} are overridden to eliminate scans of ActiveSupport::Dependencies.autoload_paths. 
+- Kernel#require and Kernel#load are modified to eliminate $LOAD_PATH scans <!-- .element: class="fragment" data-fragment-index="1" -->
+- ActiveSupport::Dependencies.{autoloadable_module?,load_missing_constant,depend_on} are overridden to eliminate scans of ActiveSupport::Dependencies.autoload_paths. <!-- .element: class="fragment" data-fragment-index="2" -->
 
 ---
 
 ### Compilation Caching
 
-- RubyVM::InstructionSequence.load_iseq is implemented to cache the result of Ruby bytecode compilation
-- YAML.load_file is modified to cache the result of loading a YAML object in MessagePack format (or Marshal, if the message uses types unsupported by MessagePack)
+- RubyVM::InstructionSequence.load_iseq is implemented to cache the result of Ruby bytecode compilation <!-- .element: class="fragment" data-fragment-index="1" -->
+- YAML.load_file is modified to cache the result of loading a YAML object in MessagePack format (or Marshal, if the message uses types unsupported by MessagePack) <!-- .element: class="fragment" data-fragment-index="2" -->
 ---
 
 ---
@@ -276,14 +277,103 @@ After: 20.115s
 
 ---
 
-- Spring is a rails only tool
-- Only for development and test environments
+- Spring is a rails only tool <!-- .element: class="fragment" data-fragment-index="1" -->
+- Only for development and test environments <!-- .element: class="fragment" data-fragment-index="2" -->
 ---
 
 ![Spring](spring.png)
 
 ---
 https://github.com/rails/spring/blob/577cf01f232bb6dbd0ade7df2df2ac209697e741/lib/spring/application.rb#L150
+---
+
+```ruby [5-6|10|13|16-18|20-21|28-35|37-38|40-44|60|63]
+ def serve(client)
+      log "got client"
+      manager.puts
+
+      _stdout, stderr, _stdin = streams = 3.times.map { client.recv_io }
+      [STDOUT, STDERR, STDIN].zip(streams).each { |a, b| a.reopen(b) }
+
+      preload unless preloaded?
+
+      args, env = JSON.load(client.read(client.gets.to_i)).values_at("args", "env")
+      command   = Spring.command(args.shift)
+
+      connect_database
+      setup command
+
+      if Rails.application.reloaders.any?(&:updated?)
+        Rails.application.reloader.reload!
+      end
+
+      pid = fork {
+        Process.setsid
+        IGNORE_SIGNALS.each { |sig| trap(sig, "DEFAULT") }
+        trap("TERM", "DEFAULT")
+
+        unless Spring.quiet
+          STDERR.puts "Running via Spring preloader in process #{Process.pid}"
+
+          if Rails.env.production?
+            STDERR.puts "WARNING: Spring is running in production. To fix "         \
+                        "this make sure the spring gem is only present "            \
+                        "in `development` and `test` groups in your Gemfile "       \
+                        "and make sure you always use "                             \
+                        "`bundle install --without development test` in production"
+          end
+        end
+
+        ARGV.replace(args)
+        $0 = command.exec_name
+
+        # Delete all env vars which are unchanged from before Spring started
+        original_env.each { |k, v| ENV.delete k if ENV[k] == v }
+
+        # Load in the current env vars, except those which *were* changed when Spring started
+        env.each { |k, v| ENV[k] ||= v }
+
+        # requiring is faster, so if config.cache_classes was true in
+        # the environment's config file, then we can respect that from
+        # here on as we no longer need constant reloading.
+        if @original_cache_classes
+          ActiveSupport::Dependencies.mechanism = :require
+          Rails.application.config.cache_classes = true
+        end
+
+        connect_database
+        srand
+
+        invoke_after_fork_callbacks
+        shush_backtraces
+
+        command.call
+      }
+
+      disconnect_database
+
+      log "forked #{pid}"
+      manager.puts pid
+
+      wait pid, streams, client
+    rescue Exception => e
+      log "exception: #{e}"
+      manager.puts unless pid
+
+      if streams && !e.is_a?(SystemExit)
+        print_exception(stderr, e)
+        streams.each(&:close)
+      end
+
+      client.puts(1) if pid
+      client.close
+    ensure
+      # Redirect STDOUT and STDERR to prevent from keeping the original FDs
+      # (i.e. to prevent `spring rake -T | grep db` from hanging forever),
+      # even when exception is raised before forking (i.e. preloading).
+      reset_streams
+    end
+```
 ---
 ### Why are we getting weired errors then ?
 ---
@@ -292,4 +382,4 @@ https://github.com/rails/spring/blob/577cf01f232bb6dbd0ade7df2df2ac209697e741/li
     -- Phil Karlton
 
 ---
-
+## Questions ? 🙋‍♂️
