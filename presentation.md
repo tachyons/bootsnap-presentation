@@ -1,4 +1,4 @@
-## Behind the scenes of Bootsnap
+## Bootsnap under the hood
 
 ---
 
@@ -7,7 +7,6 @@
 ### Software Engineer 👨‍💻
 
 ---
-
 ## Life of a ruby program
 
 ---
@@ -113,6 +112,7 @@ load_from_binary(File.read('example.bin')).eval
 46
 ```
 ---
+ ### But ...
 - Machine dependent, can't transfer
 
 <!-- Programatically load
@@ -133,7 +133,7 @@ end
 ```
 ---
 
-- What if we require twice? 
+- What if we call equire twice? 
 ---
 
 ### Keep track of require 📒
@@ -153,6 +153,7 @@ end
 ### Look everywhere 🕵️‍♂️
 ```ruby
   $LOAD_PATH = []
+  #$LOAD_PATH = += gems_path + stdlib path + application code paths
 
   def require(filename)
     full_path = $LOAD_PATH.take do |path|
